@@ -2,6 +2,6 @@
 
 | Owner | Laptop and OS | Runs ROS 2 Humble (yes/no) | How we tested |
 |-------|---------------|----------------------------|---------------|
-| emilijus | ThinkBook | TODO | TODO |
-| vlad | Zenbook | TODO | TODO |
+| emilijus | ThinkBook | Yes | We ran it, runs okay |
+| vlad | Zenbook | Yes | We ran it, runs okay |
 
