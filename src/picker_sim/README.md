@@ -14,6 +14,8 @@ Version 0.3.0. The base can drive forward/back, strafe sideways and turn in plac
 | `worlds/picker_lab.sdf` | 6 x 6 m fenced area, a 0.4 m crate at (1.5, 1.0), a person proxy cylinder at (2.0, -1.0) |
 | `launch/sim.launch.py` | Gazebo, robot_state_publisher, spawn, ROS-Gazebo bridges, RViz |
 | `picker_sim/teleop.py` | Keyboard teleop for the mecanum base (IJKL + UO) |
+| `picker_sim/stop.py` | `ros2 run picker_sim stop`: reliable one-shot stop |
+| `picker_sim/stop_test.py` | Repeated stop test, prints a results table (issue #16) |
 | `rviz/picker.rviz` | Top-down view in `odom`: robot model, TF, scan, odometry |
 | `docker/Dockerfile` | Humble + Gazebo image for machines that aren't on Ubuntu 22.04 |
 
@@ -160,8 +162,16 @@ Without the teleop, send a command by hand:
 ```bash
 ros2 topic pub -r 20 /controller/cmd_vel geometry_msgs/msg/Twist "{linear: {y: 0.15}}"
 # Ctrl+C, then stop it explicitly; the base keeps the last command:
-ros2 topic pub --once /controller/cmd_vel geometry_msgs/msg/Twist "{}"
+ros2 run picker_sim stop
 ```
+
+### Stop command
+
+`ros2 run picker_sim stop` waits until the base is subscribed to `/controller/cmd_vel`, sends one zero Twist and exits. It exits with code 1 if nothing is listening after 2 s. A plain `ros2 topic pub --once` can publish before discovery finishes, and then the message is lost without an error.
+
+Another publisher that is still sending motion overrides the stop on its next message. That includes the teleop while a key is held, and the teleop's idle stream of zeros fights any other driver. Close the teleop before you drive the robot from a script.
+
+`ros2 run picker_sim stop_test` drives forward and back at 0.15 and 0.3 m/s, sends the stop and measures stop time and distance from `/odom` (5 runs per speed, `-p runs:=N`). Close the teleop first. Results: wiki page [Stop command test](https://github.com/SRH-AI-AUTOMATION-GARBAGE-PICKERS/The-garbage-picker/wiki/Stop-command-test).
 
 ## 6. ROS interface
 
