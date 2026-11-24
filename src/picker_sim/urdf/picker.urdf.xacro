@@ -1,0 +1,160 @@
+<?xml version="1.0"?>
+<!--
+  Picker robot (Hiwonder ClawPi Ultimate) for Gazebo Fortress.
+
+  From Hiwonder clawpi_description (github.com/Hiwonder/ClawPi):
+    frame names, joint offsets, STL meshes (visuals).
+  Added here:
+    - box collision from vendor dimensions (313.5 x 170 mm footprint). The
+      9 MB chassis mesh is too heavy to use as a collision shape.
+      Check the fit in Gazebo: right-click the robot > View > Collisions.
+    - total mass 1.13 kg (vendor spec; Hiwonder's URDF sums to ~0.32 kg)
+    - COIN-D6 lidar on lidar_frame, publishing /scan_raw like the real driver
+    - holonomic base (VelocityControl) + ground-truth odometry
+  Not modelled: arm joints. Hiwonder's URDF has the claw as a fixed link.
+-->
+<robot name="picker" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:property name="mesh_dir" value="file://$(find clawpi_description)/meshes"/>
+  <xacro:property name="M_PI" value="3.1415926535897931"/>
+
+  <!-- Collision box and mass -->
+  <xacro:property name="mass" value="1.13"/>
+  <xacro:property name="box_l" value="0.3135"/>
+  <xacro:property name="box_w" value="0.170"/>
+  <xacro:property name="box_h" value="0.11"/>
+  <!-- Box centre in base_link frame. base_link is 0.048 m above the floor,
+       so z = 0.017 puts the box between 0.01 and 0.12 m above the floor. -->
+  <xacro:property name="box_x" value="0.0"/>
+  <xacro:property name="box_z" value="0.017"/>
+
+  <material name="body"><color rgba="0.79 0.82 0.93 1"/></material>
+  <material name="dark"><color rgba="0.15 0.15 0.15 1"/></material>
+
+  <link name="base_footprint"/>
+
+  <joint name="base_footprint_to_base_link" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0.048" rpy="0 0 0"/>
+  </joint>
+
+  <link name="base_link">
+    <inertial>
+      <origin xyz="${box_x} 0 ${box_z}" rpy="0 0 0"/>
+      <mass value="${mass}"/>
+      <inertia
+        ixx="${mass*(box_w*box_w + box_h*box_h)/12}" ixy="0" ixz="0"
+        iyy="${mass*(box_l*box_l + box_h*box_h)/12}" iyz="0"
+        izz="${mass*(box_l*box_l + box_w*box_w)/12}"/>
+    </inertial>
+    <visual name="base_link_visual">
+      <geometry><mesh filename="${mesh_dir}/base_link.STL"/></geometry>
+      <material name="body"/>
+    </visual>
+    <collision name="base_link_collision">
+      <origin xyz="${box_x} 0 ${box_z}" rpy="0 0 0"/>
+      <geometry><box size="${box_l} ${box_w} ${box_h}"/></geometry>
+    </collision>
+  </link>
+
+  <link name="imu_link"/>
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+    <origin xyz="0 0 0" rpy="0 0 ${-M_PI/2}"/>
+  </joint>
+
+  <link name="lidar_link">
+    <visual name="lidar_link_visual">
+      <geometry><mesh filename="${mesh_dir}/lidar_link.STL"/></geometry>
+      <material name="dark"/>
+    </visual>
+  </link>
+  <joint name="lidar_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="lidar_link"/>
+    <origin xyz="-0.0324356036880564 0 0.118832653914495" rpy="0 0 0"/>
+  </joint>
+
+  <link name="lidar_frame"/>
+  <joint name="lidar_frame_joint" type="fixed">
+    <parent link="lidar_link"/>
+    <child link="lidar_frame"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <link name="claw_link">
+    <visual name="claw_link_visual">
+      <geometry><mesh filename="${mesh_dir}/claw_link.STL"/></geometry>
+      <material name="body"/>
+    </visual>
+  </link>
+  <joint name="claw_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="claw_link"/>
+    <origin xyz="0.137166387435588 -0.00630172264969037 -0.00351203657000743"
+            rpy="0 -0.000259211959266085 0.000187779447209794"/>
+  </joint>
+
+  <!-- ================= Gazebo ================= -->
+
+  <!-- Frictionless contact: VelocityControl moves the model directly,
+       so floor friction would only add drag. -->
+  <gazebo reference="base_link">
+    <mu1>0.0</mu1>
+    <mu2>0.0</mu2>
+  </gazebo>
+
+  <!-- COIN-D6: 360 deg, 0.9 deg resolution (400 samples), 10 Hz, 0.05-12 m -->
+  <gazebo reference="lidar_frame">
+    <sensor name="lidar" type="gpu_lidar">
+      <pose>0 0 0 0 0 0</pose>
+      <topic>scan_raw</topic>
+      <update_rate>10</update_rate>
+      <always_on>1</always_on>
+      <visualize>true</visualize>
+      <lidar>
+        <scan>
+          <horizontal>
+            <samples>400</samples>
+            <resolution>1</resolution>
+            <min_angle>-3.14159</min_angle>
+            <max_angle>3.12588</max_angle>
+          </horizontal>
+          <vertical>
+            <samples>1</samples>
+            <resolution>1</resolution>
+            <min_angle>0</min_angle>
+            <max_angle>0</max_angle>
+          </vertical>
+        </scan>
+        <range>
+          <min>0.05</min>
+          <max>12.0</max>
+          <resolution>0.01</resolution>
+        </range>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.01</stddev>
+        </noise>
+      </lidar>
+    </sensor>
+  </gazebo>
+
+  <gazebo>
+    <!-- Holonomic base: /model/picker/cmd_vel (bridged to /controller/cmd_vel) -->
+    <plugin filename="ignition-gazebo-velocity-control-system"
+            name="ignition::gazebo::systems::VelocityControl"/>
+    <!-- Ground-truth odometry + odom->base_footprint TF -->
+    <plugin filename="ignition-gazebo-odometry-publisher-system"
+            name="ignition::gazebo::systems::OdometryPublisher">
+      <odom_frame>odom</odom_frame>
+      <robot_base_frame>base_footprint</robot_base_frame>
+      <dimensions>2</dimensions>
+      <odom_publish_frequency>50</odom_publish_frequency>
+    </plugin>
+  </gazebo>
+
+</robot>

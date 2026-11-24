@@ -1,0 +1,96 @@
+<?xml version="1.0"?>
+<!--
+  Picker test area for Gazebo Fortress (ROS 2 Humble).
+  6 x 6 m fenced area, a crate and a person proxy.
+  The robot itself is spawned from urdf/picker.urdf.xacro.
+-->
+<sdf version="1.8">
+  <world name="picker_lab">
+
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+
+    <plugin filename="ignition-gazebo-physics-system"
+            name="ignition::gazebo::systems::Physics"/>
+    <plugin filename="ignition-gazebo-user-commands-system"
+            name="ignition::gazebo::systems::UserCommands"/>
+    <plugin filename="ignition-gazebo-scene-broadcaster-system"
+            name="ignition::gazebo::systems::SceneBroadcaster"/>
+    <plugin filename="ignition-gazebo-sensors-system"
+            name="ignition::gazebo::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+
+    <light type="directional" name="sun">
+      <cast_shadows>false</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.9 0.9 0.9 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <!-- Floor -->
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry><plane><normal>0 0 1</normal><size>20 20</size></plane></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><plane><normal>0 0 1</normal><size>20 20</size></plane></geometry>
+          <material>
+            <ambient>0.7 0.7 0.7 1</ambient>
+            <diffuse>0.7 0.7 0.7 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- 6 x 6 m fenced test area (SR-10), walls 0.5 m high -->
+    <model name="walls">
+      <static>true</static>
+      <link name="link">
+        <collision name="north_c"><pose>0 3.05 0.25 0 0 0</pose><geometry><box><size>6.2 0.1 0.5</size></box></geometry></collision>
+        <visual name="north_v"><pose>0 3.05 0.25 0 0 0</pose><geometry><box><size>6.2 0.1 0.5</size></box></geometry>
+          <material><ambient>0.9 0.8 0.2 1</ambient><diffuse>0.9 0.8 0.2 1</diffuse></material></visual>
+        <collision name="south_c"><pose>0 -3.05 0.25 0 0 0</pose><geometry><box><size>6.2 0.1 0.5</size></box></geometry></collision>
+        <visual name="south_v"><pose>0 -3.05 0.25 0 0 0</pose><geometry><box><size>6.2 0.1 0.5</size></box></geometry>
+          <material><ambient>0.9 0.8 0.2 1</ambient><diffuse>0.9 0.8 0.2 1</diffuse></material></visual>
+        <collision name="east_c"><pose>3.05 0 0.25 0 0 0</pose><geometry><box><size>0.1 6.0 0.5</size></box></geometry></collision>
+        <visual name="east_v"><pose>3.05 0 0.25 0 0 0</pose><geometry><box><size>0.1 6.0 0.5</size></box></geometry>
+          <material><ambient>0.9 0.8 0.2 1</ambient><diffuse>0.9 0.8 0.2 1</diffuse></material></visual>
+        <collision name="west_c"><pose>-3.05 0 0.25 0 0 0</pose><geometry><box><size>0.1 6.0 0.5</size></box></geometry></collision>
+        <visual name="west_v"><pose>-3.05 0 0.25 0 0 0</pose><geometry><box><size>0.1 6.0 0.5</size></box></geometry>
+          <material><ambient>0.9 0.8 0.2 1</ambient><diffuse>0.9 0.8 0.2 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <!-- Obstacle: crate -->
+    <model name="crate">
+      <static>true</static>
+      <pose>1.5 1.0 0.2 0 0 0</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>0.4 0.4 0.4</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>0.4 0.4 0.4</size></box></geometry>
+          <material><ambient>0.6 0.4 0.2 1</ambient><diffuse>0.6 0.4 0.2 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <!-- Obstacle: person proxy (r = 0.2 m, h = 1.7 m) for zone tests (SR-06).
+         Drag it with the Translate tool (T) in the Gazebo GUI. -->
+    <model name="person">
+      <static>true</static>
+      <pose>2.0 -1.0 0.85 0 0 0</pose>
+      <link name="link">
+        <collision name="c"><geometry><cylinder><radius>0.2</radius><length>1.7</length></cylinder></geometry></collision>
+        <visual name="v"><geometry><cylinder><radius>0.2</radius><length>1.7</length></cylinder></geometry>
+          <material><ambient>0.2 0.4 0.8 1</ambient><diffuse>0.2 0.4 0.8 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <!-- The Picker is spawned from urdf/picker.urdf.xacro by launch/sim.launch.py -->
+
+  </world>
+</sdf>
