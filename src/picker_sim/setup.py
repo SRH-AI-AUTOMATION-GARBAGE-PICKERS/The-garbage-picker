@@ -21,5 +21,9 @@ setup(
     maintainer_email='todo@example.com',
     description='Gazebo Fortress simulation of the Picker robot',
     license='Apache-2.0',
-    entry_points={'console_scripts': ['teleop = picker_sim.teleop:main']},
+    entry_points={'console_scripts': [
+        'teleop = picker_sim.teleop:main',
+        'stop = picker_sim.stop:main',
+        'stop_test = picker_sim.stop_test:main',
+    ]},
 )
