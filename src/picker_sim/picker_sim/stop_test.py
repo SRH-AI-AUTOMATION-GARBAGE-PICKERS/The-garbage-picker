@@ -17,11 +17,13 @@ PASS needs: stopped, stays stopped, and distance <= SR-13's 0.15 m.
 Close the teleop first; it publishes on the same topic at 20 Hz.
 """
 import math
+import signal
 import time
 
 import rclpy
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
+from rclpy.signals import SignalHandlerOptions
 
 from picker_sim.stop import TOPIC, send_stop
 
@@ -90,7 +92,11 @@ class StopTest:
 
 
 def main():
-    rclpy.init()
+    # Own signal handling (same as teleop): rclpy's handler would invalidate
+    # the context before the final zero Twist in `finally` is published, and
+    # Ctrl+C would leave the robot driving.
+    rclpy.init(signal_handler_options=SignalHandlerOptions.NO)
+    signal.signal(signal.SIGTERM, signal.default_int_handler)  # kill -> same path as Ctrl+C
     node = rclpy.create_node('picker_stop_test')
     runs = node.declare_parameter('runs', 5).value
     speeds = node.declare_parameter('speeds', [0.15, 0.3]).value
@@ -117,6 +123,8 @@ def main():
                       f'{"stopped in %.0f ms" % (t * 1000) if t is not None else "DID NOT STOP"}, '
                       f'{dist * 100:.1f} cm, {"PASS" if ok else "FAIL"}', flush=True)
                 test.spin_for(0.5)
+    except KeyboardInterrupt:
+        print('\nInterrupted, stopping the robot')
     finally:
         test.pub.publish(Twist())  # never leave the robot driving
         rclpy.spin_once(node, timeout_sec=0.2)
