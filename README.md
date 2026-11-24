@@ -20,5 +20,6 @@ AI and Autonomous Systems Lab, SRH. Team Picker works with the ClawPi robot. Tea
 - Product Backlog, Sprint goal, roles: GitHub Projects board (TODO: link)
 - Definition of Done v1: [docs/definition-of-done.md](docs/definition-of-done.md)
 - Robot sheet: [docs/robot.md](docs/robot.md)
+- Picker simulation (Gazebo) and teleop: [src/picker_sim/README.md](src/picker_sim/README.md)
 - Laptop list: [docs/laptops.md](docs/laptops.md)
 - Lab protocols: [protocols/](protocols/)
